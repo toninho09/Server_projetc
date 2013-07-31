@@ -22,6 +22,7 @@ public class Conexao_mysql {
     private String serverName, mydatabase, url, username, password;
     private Connection connection;
     private Statement sql;
+    private ResultSet rs;
 
     public boolean configurar(String servername, String database, String username, String password, String port) {
         boolean retorno = false;
@@ -50,7 +51,45 @@ public class Conexao_mysql {
         }
         return retorno;
     }
-
+    public boolean escrever_mensagem(String numero_de,String numero_para,String Mensagem){
+         boolean retorno = false;
+        try {
+            retorno = sql.execute("INSERT INTO `Mensageiro`.`Mensagem` (`De`, `Para`, `Mensagem`, `Lida`) VALUES ('"+numero_de+"','"+numero_para+"','"+Mensagem+"', 0);");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    return false;
+    }
+    
+    public ResultSet pesquisa_tabela(String cod_sql){
+        try {
+            rs = sql.executeQuery(cod_sql);
+            
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return rs;
+    }
+    
+    public boolean pesquisar_existe(String cod_sql){
+        boolean retorno =false;
+        
+        try {
+            retorno =sql.execute(cod_sql);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return retorno;
+    }
+    public boolean Marcar_lida(String Key){
+        boolean retorno=false;
+        try {
+            sql.execute("UPDATE `Mensageiro`.`Mensagem` SET `Lida`=1 WHERE `Key`='"+Key+"';");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return retorno;
+    }
     /**
      * @return the serverName
      */
