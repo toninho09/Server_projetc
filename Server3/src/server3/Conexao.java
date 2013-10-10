@@ -42,7 +42,6 @@ public class Conexao extends Thread {
 
     }
 
-
     public String getHostAddress() {
         return socket.getInetAddress().getHostAddress();
     }

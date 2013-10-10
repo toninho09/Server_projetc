@@ -60,11 +60,13 @@ public class MysqlComand extends Thread {
     public boolean escrever_mensagem(String numero_de, String numero_para, String Mensagem) {
         boolean retorno = false;
         try {
-            retorno = sql.execute("INSERT INTO `Mensageiro`.`Mensagem` (`to`, `from`, `mensagem`, `date`,`view`) VALUES ('" + numero_para + "', '" + numero_de + "', '" + Mensagem + "','" + getDateTime() + "',0);");
+            String hora = getDateTime();
+            sql.execute("INSERT INTO `Mensageiro`.`Mensagem` (`to`, `from`, `mensagem`, `date`,`view`) VALUES ('" + numero_para + "', '" + numero_de + "', '" + Mensagem + "','" + hora + "',0);");
+            retorno = pesquisar_existe("SELECT * FROM Mensageiro.Mensagem where Mensagem.from = '" + numero_de + "'and Mensagem.to = '" + numero_para + "'and Mensagem.date = '" + hora + "'and Mensagem.view = '" + Mensagem + "' and Mensagem.view = 0 ;");
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        return false;
+        return retorno;
     }
 
     public int pegar_quantidade(String sql) {
@@ -95,6 +97,12 @@ public class MysqlComand extends Thread {
 
         return resultado;
     }
+    public boolean verificar_online(String login){
+        boolean retorno = false;
+        retorno = verificar_existe("SELECT * FROM Mensageiro.User where userName = '"+login+"' and status = 1;", 1);
+        return retorno;
+    }
+
     public String pegar_Valor(String sql, int numero, String campo) {
         String retorno = null;
         ResultSet rs = pesquisa_tabela(sql);
@@ -137,10 +145,36 @@ public class MysqlComand extends Thread {
     public boolean marcar_lida(String Key) {
         boolean retorno = false;
         try {
-            sql.execute("UPDATE `Mensageiro`.`Mensagem` SET `view`=1 WHERE `idMensagem`='"+Key+"';");
+            sql.execute("UPDATE `Mensageiro`.`Mensagem` SET `view`=1 WHERE `idMensagem`='" + Key + "';");
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+        return retorno;
+    }
+
+    public boolean add_amigo(String login, String loginAmigo) {
+        boolean retorno = false;
+        String user, userAmigo, cmd, cmd2;
+        if (verificar_login_used(login)) {
+            cmd = "Select * from Mensageiro.User where userName = '" + login + "';";
+            user = pegar_Valor(cmd, 1, "idUser");
+            if (verificar_login_used(loginAmigo)) {
+                cmd = "Select * from Mensageiro.User where userName = '" + loginAmigo + "';";
+                userAmigo = pegar_Valor(cmd, 1, "idUser");
+                cmd = "Select * from Mensageiro.Amigo where idAmigo1 ='" + user + "' and idAmigo2 = '" + userAmigo + "'";
+                cmd2 = "Select * from Mensageiro.Amigo where idAmigo2 ='" + user + "' and idAmigo1 = '" + userAmigo + "'";
+                if (!verificar_existe(cmd, 1) && !verificar_existe(cmd2, 1)) {
+                    cmd = "INSERT INTO `Mensageiro`.`Amigo` (`idAmigo1`, `idAmigo2`, `Aceito1`, `Aceito2`) VALUES (" + user + ", " + userAmigo + ", 1, 0)";
+                    try {
+                        sql.execute(cmd);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    cmd = "SELECT * FROM Mensageiro.Amigo where idAmigo1 = " + user + " and idAmigo2=" + userAmigo + " ;";
+                    retorno = pesquisar_existe(cmd);
+                }
+            }
+        };
         return retorno;
     }
 
@@ -148,17 +182,31 @@ public class MysqlComand extends Thread {
         return pesquisar_existe("Select * from Mensageiro.User where userName = '" + name + "' and userPass ='" + pass + "';");
     }
 
-    public boolean verificar_login_create(String name) {
+    public boolean verificar_login_used(String name) {
         return pesquisar_existe("Select * from Mensageiro.User where userName = '" + name + "';");
     }
 
-    public boolean crear_user(String name, String pass) {
+    public boolean verificar_email_used(String email) {
+        return pesquisar_existe("Select * from Mensageiro.User where email = '" + email + "';");
+    }
+
+    public boolean crear_user(String name, String pass, String email) {
         boolean retorno = false;
         try {
-            if (!verificar_login_create(name)) {
-                sql.execute("INSERT INTO `Mensageiro`.`User` (`userName`, `userPass`) VALUES ('" + name + "', '" + pass + "');");
+            if (!verificar_login_used(name) && !verificar_email_used(email)) {
+                sql.execute("INSERT INTO `Mensageiro`.`User` (`userName`, `userPass`,`email`) VALUES ('" + name + "', '" + pass + "', '" + email + "');");
                 retorno = true;
             }
+        } catch (SQLException ex) {
+            Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return retorno;
+    }
+
+    public boolean mudar_status(String idUser, int status) {
+        boolean retorno = false;
+        try {
+            retorno = sql.execute("UPDATE `Mensageiro`.`User` SET `status`='" + status + "' WHERE `idUser`='" + idUser + "';");
         } catch (SQLException ex) {
             Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
         }
