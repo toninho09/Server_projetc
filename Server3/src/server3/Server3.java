@@ -25,6 +25,7 @@ public class Server3 {
             socket = new ServerSocket(1234);
             while (!socket.isClosed()) {
                 new Conexao(socket.accept(), mc).start();
+                System.out.println( Thread.activeCount());
             }
         } catch (IOException ex) {
             Logger.getLogger(Server3.class.getName()).log(Level.SEVERE, null, ex);

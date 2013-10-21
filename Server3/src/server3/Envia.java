@@ -17,9 +17,8 @@ public class Envia extends Thread {
     public Conexao con;
     public String men;
 
-    public Envia(PrintStream out, Conexao con) {
+    public Envia(PrintStream out) {
         this.cliente = out;
-        this.con = con;
     }
 
     public void run(String mensagem) {
@@ -28,5 +27,8 @@ public class Envia extends Thread {
 
     public void mensagem(String mensagem) {
         cliente.println(mensagem);
+    }
+    public void close(){
+        cliente.close();
     }
 }

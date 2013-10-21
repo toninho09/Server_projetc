@@ -5,6 +5,10 @@
 package server3;
 
 import com.sun.jndi.ldap.PersistentSearchControl;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -25,6 +29,7 @@ public class Tratamento extends Thread {
     }
 
     public void run() {
+        
     }
 
     public void tratar_valores(String comando) {
@@ -45,11 +50,18 @@ public class Tratamento extends Thread {
             nCmd = 7;
         } else if (m.equals("//delAmigo")) {
             nCmd = 8;
-        } else if (m.equals("//checkAmigo")) {
+        } else if (m.equals("//checkAmigo")) { //
             nCmd = 9;
         } else if (m.equals("//checkOnline")) { // funcionando
             nCmd = 10;
+        } else if (m.equals("//checklogin")) { //funcionando
+            nCmd = 11;
+        } else if (m.equals("//checkemail")) { //funcionando
+            nCmd = 12;
+        } else if (m.equals("//aceitarAmigo")) {
+            nCmd = 13;
         }
+
 
         switch (nCmd) {
             case 1: {
@@ -66,7 +78,7 @@ public class Tratamento extends Thread {
             case 2: {
                 cont++;
                 cmd[cont] = m;
-                if (cont == 3) {
+                if (cont == 4) {
                     this.tratar(cmd);
                     cont = 0;
                     nCmd = 0;
@@ -85,9 +97,23 @@ public class Tratamento extends Thread {
             }
             break;
             case 4: {
-                int i, n_mensagem;
+                int i, n_mensagem,x;
                 String sql = "SELECT * FROM Mensageiro.Mensagem where Mensagem.to = '" + this.login + "' and Mensagem.view = false;";
                 n_mensagem = this.numero_mensagem();
+                x=0;
+                while(n_mensagem==0){
+                    if (x>=50){
+                        x=0;
+                        con.env.mensagem("//nMensagem");
+                    }
+                    x++;
+                     n_mensagem = this.numero_mensagem(); 
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(Tratamento.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
                 for (i = 1; i <= n_mensagem; i++) {
                     con.env.mensagem("//envMensagem");
                     con.env.mensagem(con.mc.pegar_Valor(sql, 1, "from"));
@@ -112,19 +138,18 @@ public class Tratamento extends Thread {
                 String sql1 = "SELECT * FROM Mensageiro.Amigo where idAmigo1 = '" + this.idUser + "' and Aceito1 = 1 and Aceito2 =1 ;";
                 n = mc.pegar_quantidade(sql1);
                 for (i = 1; i <= n; i++) {
-
-                    con.env.mensagem("//envAmigo");
-                    con.env.mensagem(mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + mc.pegar_Valor(sql1, i, "idAmigo2") + "';", 1, "userName"));
+                    String value = mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + mc.pegar_Valor(sql1, i, "idAmigo2") + "';", 1, "userName");
+                        con.env.mensagem("//envAmigo");
+                    con.env.mensagem(value);
                 }
-                sql1 = "SELECT * FROM Mensageiro.Amigo where idAmigo2 = '" + this.idUser + "' and Aceito1 = 1 and Aceito2 =1 ;";
+                sql1 = "SELECT * FROM Mensageiro.Amigo where idAmigo2 = '" + this.idUser + "' and Aceito1 = 1 and Aceito2 = 1 ;";
                 n = mc.pegar_quantidade(sql1);
                 for (i = 1; i <= n; i++) {
-
-                    con.env.mensagem("//envAmigo");
-                    con.env.mensagem(mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + mc.pegar_Valor(sql1, i, "idAmigo1") + "';", 1, "userName"));
+                    String value = mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + mc.pegar_Valor(sql1, i, "idAmigo1") + "';", 1, "userName");
+                        con.env.mensagem("//envAmigo");
+                    con.env.mensagem(value);
                 }
                 con.env.mensagem("//endAmigo");
-
             }
             break;
             case 7: {
@@ -164,6 +189,36 @@ public class Tratamento extends Thread {
                     nCmd = 0;
                 }
             }
+            break;
+            case 11: {
+                cont++;
+                cmd[cont] = m;
+                if (cont == 2) {
+                    this.tratar(cmd);
+                    cont = 0;
+                    nCmd = 0;
+                }
+            }
+            break;
+            case 12: {
+                cont++;
+                cmd[cont] = m;
+                if (cont == 2) {
+                    this.tratar(cmd);
+                    cont = 0;
+                    nCmd = 0;
+                }
+            }
+            break;
+            case 13: {
+                cont++;
+                cmd[cont] = m;
+                if (cont == 2) {
+                    this.tratar(cmd);
+                    cont = 0;
+                    nCmd = 0;
+                }
+            }
         }
     }
 
@@ -180,7 +235,7 @@ public class Tratamento extends Thread {
                 con.env.mensagem("//Nlogado");
             }
         } else if (cmd[1].equals("//createlogin")) {//cmd[2] = name , cmd[3] = pass , cmd[4] = email
-            if (mc.crear_user(cmd[2], cmd[3], cmd[4])) {
+            if (mc.criar_user(cmd[2], cmd[3], cmd[4])) {
                 con.env.mensagem("//create");
 
             } else {
@@ -211,18 +266,54 @@ public class Tratamento extends Thread {
             } else {
                 con.env.mensagem("//NAddAmigo");
             }
-        } else if (cmd[1].equals("//delAmigo")) {
+        } else if (cmd[1].equals("//delAmigo")) { //cmd[2]  = user //
+            String sql, sql1 = "SELECT * FROM Mensageiro.Amigo where idAmigo1 = '" + this.idUser + "' and Aceito1 = 1 and Aceito2 =1 ;";
+            if (!mc.deletar_amigo(login, cmd[2])) {
+                con.env.mensagem("//Sdel");
+            } else {
+                con.env.mensagem("//Ndel");
+            }
             // ainda a implementar
         } else if (cmd[1].equals("//checkAmigo")) {
-            String sql = "SELECT * FROM Mensageiro.Amigo where  Aceito1 = 1 and Aceito2 = 1 and idAmigo1 = '" + idUser + "' or idAmigo2 = '" + idUser + "';";
-            mc.pegar_quantidade(pass);
+            String sql = "SELECT * FROM Mensageiro.Amigo where Aceito2 = 0 and  idAmigo2 = '" + idUser + "';";
+            if (mc.pegar_quantidade(sql) > 0) {
+                int i;
+                con.env.mensagem("//Sconvite");
+                for (i = 1; i <= mc.pegar_quantidade(sql); i++) {
+                    con.env.mensagem("//envconvite");
+                    con.env.mensagem(mc.pegar_Valor("select * from Mensageiro.User where idUser = " + mc.pegar_Valor(sql, i, "idAmigo1") + ";", 1, "userName"));
+                }
+                con.env.mensagem("//endconvite");
+
+            }
+            con.env.mensagem("//Nconvite");
+
         } else if (cmd[1].equals("//checkOnline")) {
             if (mc.verificar_online(cmd[2])) {
                 con.env.mensagem("//Sonline");
             } else {
                 con.env.mensagem("//Nonline");
             }
-        };
+        } else if (cmd[1].equals("//checklogin")) {
+            if (!mc.verificar_login_used(cmd[2])) {
+                con.env.mensagem("//Nused");
+            } else {
+                con.env.mensagem("//Sused");
+            }
+        } else if (cmd[1].equals("//checkemail")) {
+            if (!mc.verificar_email_used(cmd[2])) {
+                con.env.mensagem("//Nused");
+            } else {
+                con.env.mensagem("//Sused");
+            }
+        } else if (cmd[1].equals("//aceitarAmigo")) {
+            if (mc.aceitar_pedido_amizade(cmd[2], idUser)) {
+                con.env.mensagem("//Simaceito");
+            } else {
+                con.env.mensagem("//Naoaceito");
+            }
+        }
+
     }
 
     public int numero_mensagem() {

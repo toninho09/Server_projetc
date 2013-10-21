@@ -34,12 +34,11 @@ public class Conexao extends Thread {
             rec = new Recebe(socket.getInputStream(), this);
             rec.start();
             out = new PrintStream(socket.getOutputStream());
-            env = new Envia(out, this);
+            env = new Envia(out);
             trat = new Tratamento(this, mc);
         } catch (IOException ex) {
             Logger.getLogger(Conexao.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
     public String getHostAddress() {

@@ -72,13 +72,19 @@ public class MysqlComand extends Thread {
     public int pegar_quantidade(String sql) {
         int retorno = 0;
         ResultSet rs = pesquisa_tabela(sql);
+
         try {
-            while (rs.next()) {
+            if (rs.first()) {
+                rs.first();
                 retorno++;
+                while (rs.next()) {
+                    retorno++;
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         return retorno;
     }
 
@@ -97,9 +103,33 @@ public class MysqlComand extends Thread {
 
         return resultado;
     }
-    public boolean verificar_online(String login){
+
+    public boolean verificar_online(String login) {
         boolean retorno = false;
-        retorno = verificar_existe("SELECT * FROM Mensageiro.User where userName = '"+login+"' and status = 1;", 1);
+        retorno = verificar_existe("SELECT * FROM Mensageiro.User where userName = '" + login + "' and status = 1;", 1);
+        return retorno;
+    }
+
+    public boolean deletar_amigo(String login, String user) {
+        String id1, id2;
+        id1 = pegar_Valor("SELECT * FROM Mensageiro.User where userName = '" + login + "';", 1, "idUser");
+        id2 = pegar_Valor("SELECT * FROM Mensageiro.User where userName = '" + user + "';", 1, "idUser");
+        boolean retorno = true;
+        if (verificar_existe("SELECT * FROM Mensageiro.Amigo where idAmigo1 = '" + id1 + "' and idAmigo2 = '" + id2 + "';", 1)) {
+            try {
+                sql.execute("DELETE FROM `Mensageiro`.`Amigo` WHERE `idAmigo1`='" + id1 + "' and`idAmigo2`='" + id2 + "';");
+                retorno = verificar_existe("Select * FROM `Mensageiro`.`Amigo` WHERE `idAmigo1`='" + id1 + "' and`idAmigo2`='" + id2 + "';", 1);
+            } catch (SQLException ex) {
+                Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else if (verificar_existe("SELECT * FROM Mensageiro.Amigo where idAmigo1 = '" + id2 + "' and idAmigo2 = '" + id1 + "';", 1)) {
+            try {
+                sql.execute("DELETE FROM `Mensageiro`.`Amigo` WHERE `idAmigo1`='" + id2 + "' and`idAmigo2`='" + id1 + "';");
+                retorno = verificar_existe("Select * FROM `Mensageiro`.`Amigo` WHERE `idAmigo1`='" + id2 + "' and`idAmigo2`='" + id1 + "';", 1);
+            } catch (SQLException ex) {
+                Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
         return retorno;
     }
 
@@ -108,11 +138,13 @@ public class MysqlComand extends Thread {
         ResultSet rs = pesquisa_tabela(sql);
         int i;
         try {
-            rs.first();
+            if (rs.first()){
+                rs.first();
             for (i = 1; i < numero; i++) {
                 rs.next();
             }
             retorno = rs.getString(campo);
+        }
         } catch (SQLException ex) {
             Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -123,8 +155,6 @@ public class MysqlComand extends Thread {
     public ResultSet pesquisa_tabela(String cod_sql) {
         try {
             rs = sql.executeQuery(cod_sql);
-
-
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -178,19 +208,31 @@ public class MysqlComand extends Thread {
         return retorno;
     }
 
+    public boolean aceitar_pedido_amizade(String login, String idUser) {
+        boolean retorno = false;
+        String cmd = "UPDATE `Mensageiro`.`Amigo` SET `Aceito2`=1 WHERE `idAmigo1`='" + pegar_Valor("select * from Mensageiro.User where userName = '" + login + "';", 1, "idUser") + "' and`idAmigo2`='" + idUser + "';";
+        try {
+            sql.execute(cmd);
+            retorno = true;
+        } catch (Exception e) {
+        }
+        return retorno;
+    }
+
     public boolean verificar_login(String name, String pass) {
         return pesquisar_existe("Select * from Mensageiro.User where userName = '" + name + "' and userPass ='" + pass + "';");
     }
 
     public boolean verificar_login_used(String name) {
         return pesquisar_existe("Select * from Mensageiro.User where userName = '" + name + "';");
+
     }
 
     public boolean verificar_email_used(String email) {
         return pesquisar_existe("Select * from Mensageiro.User where email = '" + email + "';");
     }
 
-    public boolean crear_user(String name, String pass, String email) {
+    public boolean criar_user(String name, String pass, String email) {
         boolean retorno = false;
         try {
             if (!verificar_login_used(name) && !verificar_email_used(email)) {

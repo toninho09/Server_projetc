@@ -37,6 +37,12 @@ public class Recebe extends Thread {
         con.mc.mudar_status(con.trat.idUser, 0);
         System.out.println("saiu");
         s.close();
+        con.env.close();
+        try {
+            con.socket.close();
+        } catch (IOException ex) {
+            Logger.getLogger(Recebe.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public String receber() {
