@@ -6,6 +6,8 @@ package server3;
 
 import java.io.PrintStream;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -30,5 +32,10 @@ public class Envia extends Thread {
     }
     public void close(){
         cliente.close();
+        try {
+            this.interrupt();
+        } catch (Throwable ex) {
+            Logger.getLogger(Envia.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

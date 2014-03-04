@@ -29,20 +29,18 @@ public class Recebe extends Thread {
 
     public void run() {
         Scanner s = new Scanner(this.cliente);
-        while (s.hasNextLine()) {
+        while (s.hasNextLine() && !con.socket.isClosed()) {
             String m = s.nextLine();
             System.out.println(con.getHostAddress() + ":" + m);
             con.trat.tratar_valores(m);
         }
-        con.mc.mudar_status(con.trat.idUser, 0);
-        System.out.println("saiu");
-        s.close();
-        con.env.close();
         try {
-            con.socket.close();
-        } catch (IOException ex) {
-            Logger.getLogger(Recebe.class.getName()).log(Level.SEVERE, null, ex);
+              con.mc.mudar_status(con.trat.idUser, 0);
+        } catch (Exception e) {
         }
+      
+        System.out.println("saiu");
+        con.close();
     }
 
     public String receber() {
@@ -50,7 +48,14 @@ public class Recebe extends Thread {
         while (s.hasNextLine()) {
             String m = s.nextLine();
         }
-        ;
         return "";
+    }
+    public void close(){
+                try {
+                    this.interrupt();
+            this.finalize();
+        } catch (Throwable ex) {
+            Logger.getLogger(Envia.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

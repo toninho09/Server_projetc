@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  *
  * @author Zenner
  */
-public class Tratamento extends Thread {
+public class Tratamento  {
 
     public String login, pass, idUser;
     private Conexao con;
@@ -28,9 +28,7 @@ public class Tratamento extends Thread {
 
     }
 
-    public void run() {
-        
-    }
+
 
     public void tratar_valores(String comando) {
         String m = comando;
@@ -97,22 +95,19 @@ public class Tratamento extends Thread {
             }
             break;
             case 4: {
-                int i, n_mensagem,x;
+                int i, n_mensagem, x;
                 String sql = "SELECT * FROM Mensageiro.Mensagem where Mensagem.to = '" + this.login + "' and Mensagem.view = false;";
                 n_mensagem = this.numero_mensagem();
-                x=0;
-                while(n_mensagem==0){
-                    if (x>=50){
-                        x=0;
+                x = 0;   
+                n_mensagem = this.numero_mensagem();
+                while (n_mensagem == 0) {
                         con.env.mensagem("//nMensagem");
-                    }
-                    x++;
-                     n_mensagem = this.numero_mensagem(); 
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(1000);
                     } catch (InterruptedException ex) {
                         Logger.getLogger(Tratamento.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                    n_mensagem = numero_mensagem();
                 }
                 for (i = 1; i <= n_mensagem; i++) {
                     con.env.mensagem("//envMensagem");
@@ -138,15 +133,17 @@ public class Tratamento extends Thread {
                 String sql1 = "SELECT * FROM Mensageiro.Amigo where idAmigo1 = '" + this.idUser + "' and Aceito1 = 1 and Aceito2 =1 ;";
                 n = mc.pegar_quantidade(sql1);
                 for (i = 1; i <= n; i++) {
-                    String value = mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + mc.pegar_Valor(sql1, i, "idAmigo2") + "';", 1, "userName");
-                        con.env.mensagem("//envAmigo");
+                    String valor =  mc.pegar_Valor(sql1, i, "idAmigo2");
+                    String value = mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + valor + "';", 1, "userName");
+                    con.env.mensagem("//envAmigo");
                     con.env.mensagem(value);
                 }
                 sql1 = "SELECT * FROM Mensageiro.Amigo where idAmigo2 = '" + this.idUser + "' and Aceito1 = 1 and Aceito2 = 1 ;";
                 n = mc.pegar_quantidade(sql1);
                 for (i = 1; i <= n; i++) {
-                    String value = mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + mc.pegar_Valor(sql1, i, "idAmigo1") + "';", 1, "userName");
-                        con.env.mensagem("//envAmigo");
+                    String valor =  mc.pegar_Valor(sql1, i, "idAmigo1");
+                    String value = mc.pegar_Valor("SELECT * FROM Mensageiro.User where idUser = '" + valor + "';", 1, "userName");
+                    con.env.mensagem("//envAmigo");
                     con.env.mensagem(value);
                 }
                 con.env.mensagem("//endAmigo");
@@ -276,12 +273,14 @@ public class Tratamento extends Thread {
             // ainda a implementar
         } else if (cmd[1].equals("//checkAmigo")) {
             String sql = "SELECT * FROM Mensageiro.Amigo where Aceito2 = 0 and  idAmigo2 = '" + idUser + "';";
-            if (mc.pegar_quantidade(sql) > 0) {
+            int quant =mc.pegar_quantidade(sql);
+            if (quant > 0) {
                 int i;
                 con.env.mensagem("//Sconvite");
-                for (i = 1; i <= mc.pegar_quantidade(sql); i++) {
+                for (i = 1; i <= quant; i++) {
                     con.env.mensagem("//envconvite");
-                    con.env.mensagem(mc.pegar_Valor("select * from Mensageiro.User where idUser = " + mc.pegar_Valor(sql, i, "idAmigo1") + ";", 1, "userName"));
+                    String valor =mc.pegar_Valor(sql, i, "idAmigo1");
+                    con.env.mensagem(mc.pegar_Valor("select * from Mensageiro.User where idUser = " + valor + ";", 1, "userName"));
                 }
                 con.env.mensagem("//endconvite");
 
@@ -319,5 +318,13 @@ public class Tratamento extends Thread {
     public int numero_mensagem() {
         String sql = "SELECT * FROM Mensageiro.Mensagem where Mensagem.to = '" + login + "' and Mensagem.view = false;";
         return mc.pegar_quantidade(sql);
+    }
+    
+    public void close(){
+                try {
+                    mc.close();
+        } catch (Throwable ex) {
+            Logger.getLogger(Envia.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

@@ -20,14 +20,14 @@ import java.util.logging.Logger;
  *
  * @author Zenner
  */
-public class MysqlComand extends Thread {
+public class MysqlComand  {
 
     public MysqlComand() {
     }
     private String serverName, mydatabase, url, username, password;
     private Connection connection;
     private Statement sql;
-    private ResultSet rs;
+    //private ResultSet rs;
 
     public boolean configurar(String servername, String database, String username, String password, String port) {
         boolean retorno = false;
@@ -74,15 +74,9 @@ public class MysqlComand extends Thread {
         ResultSet rs = pesquisa_tabela(sql);
 
         try {
-            if (rs.first()) {
-                rs.first();
-                retorno++;
-                while (rs.next()) {
-                    retorno++;
-                }
-            }
+            rs.last();
+            retorno = rs.getRow();
         } catch (SQLException ex) {
-            Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return retorno;
@@ -135,24 +129,23 @@ public class MysqlComand extends Thread {
 
     public String pegar_Valor(String sql, int numero, String campo) {
         String retorno = null;
-        ResultSet rs = pesquisa_tabela(sql);
-        int i;
+        ResultSet rs;
         try {
-            if (rs.first()){
-                rs.first();
-            for (i = 1; i < numero; i++) {
-                rs.next();
+            rs = pesquisa_tabela(sql);
+            int i;
+            try {
+                rs.relative(numero);
+                retorno = rs.getString(campo).toString();
+            } catch (SQLException ex) {
             }
-            retorno = rs.getString(campo);
-        }
-        } catch (SQLException ex) {
-            Logger.getLogger(MysqlComand.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception e) {
         }
 
         return retorno;
     }
 
     public ResultSet pesquisa_tabela(String cod_sql) {
+        ResultSet rs = null;
         try {
             rs = sql.executeQuery(cod_sql);
         } catch (Exception e) {
@@ -259,6 +252,14 @@ public class MysqlComand extends Thread {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         return dateFormat.format(date).toString();
+    }
+
+    public void close() {
+        try {
+            sql.close();
+        } catch (Throwable ex) {
+            Logger.getLogger(Envia.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
